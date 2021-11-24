@@ -1,81 +1,97 @@
+using System;
+
 namespace Tennis
 {
+    class Player
+    {
+        public int Score { get; private set; }
+        public string PlayerName { get; }
+
+        public Player(string playerName)
+        {
+            PlayerName = playerName;
+        }
+
+        public void AddPoint()
+        {
+            Score++;
+        }
+
+        public bool isWinning(Player player2)
+        {
+            return Score > player2.Score;
+        }
+    }
+
+    enum ScoreName
+    {
+        Love = 0,
+        Fifteen = 1,
+        Thirty = 2,
+        Forty = 3,
+        Deuce = 4
+    }
+
+    class Referee
+    {
+        public string SayScore(Player player1, Player player2)
+        {
+            if (player1.Score == player2.Score)
+            {
+                if (player1.Score >= 3)
+                    return ScoreName.Deuce.ToString();
+
+                return GetPointsWord(player1.Score) + "-All";
+            }
+
+            if (player1.Score >= 4 || player2.Score >= 4)
+            {
+                var scoreDifference = Math.Abs(player1.Score - player2.Score);
+                var winningPlayer = GetWinningPlayer(player1, player2);
+                if (scoreDifference == 1) return "Advantage " + winningPlayer.PlayerName;
+                return  "Win for " + winningPlayer.PlayerName;
+            }
+
+            return GetPointsWord(player1.Score) + "-" + GetPointsWord(player2.Score);
+        }
+
+        private Player GetWinningPlayer(Player player1, Player player2)
+        {
+            if (player1.isWinning(player2)) return player1;
+            return player2;
+        }
+
+        private string GetPointsWord(int score)
+        {
+            return ((ScoreName)score).ToString();
+        }
+
+    }
+
     class TennisGame1 : ITennisGame
     {
-        private int m_score1 = 0;
-        private int m_score2 = 0;
-        private string player1Name;
-        private string player2Name;
+        private readonly Player player1;
+        private readonly Player player2;
+        private readonly Referee referee;
 
         public TennisGame1(string player1Name, string player2Name)
         {
-            this.player1Name = player1Name;
-            this.player2Name = player2Name;
+            player1 = new Player(player1Name);
+            player2 = new Player(player2Name);
+            referee = new Referee();
         }
 
         public void WonPoint(string playerName)
         {
-            if (playerName == "player1")
-                m_score1 += 1;
+            if (player1.PlayerName == playerName)
+                player1.AddPoint();
             else
-                m_score2 += 1;
+                player2.AddPoint();
         }
 
         public string GetScore()
         {
-            string score = "";
-            var tempScore = 0;
-            if (m_score1 == m_score2)
-            {
-                switch (m_score1)
-                {
-                    case 0:
-                        score = "Love-All";
-                        break;
-                    case 1:
-                        score = "Fifteen-All";
-                        break;
-                    case 2:
-                        score = "Thirty-All";
-                        break;
-                    default:
-                        score = "Deuce";
-                        break;
-
-                }
-            }
-            else if (m_score1 >= 4 || m_score2 >= 4)
-            {
-                var minusResult = m_score1 - m_score2;
-                if (minusResult == 1) score = "Advantage player1";
-                else if (minusResult == -1) score = "Advantage player2";
-                else if (minusResult >= 2) score = "Win for player1";
-                else score = "Win for player2";
-            }
-            else
-            {
-                for (var i = 1; i < 3; i++)
-                {
-                    if (i == 1) tempScore = m_score1;
-                    else { score += "-"; tempScore = m_score2; }
-                    switch (tempScore)
-                    {
-                        case 0:
-                            score += "Love";
-                            break;
-                        case 1:
-                            score += "Fifteen";
-                            break;
-                        case 2:
-                            score += "Thirty";
-                            break;
-                        case 3:
-                            score += "Forty";
-                            break;
-                    }
-                }
-            }
-            return score;
+            return referee.SayScore(player1, player2);
         }
     }
 }
